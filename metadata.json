@@ -1,0 +1,6 @@
+{
+  "name": "LUMINA CYBER SOLUTION",
+  "description": "Professional Cyber Café, Printing, Designing & Digital Services POS and Workstation Management System",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
