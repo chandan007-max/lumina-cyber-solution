@@ -1,0 +1,11 @@
+0: id (TEXT) NOTNULL=0 PK=1
+1: audit_event_id (TEXT) NOTNULL=1 PK=0
+2: timestamp (TEXT) NOTNULL=1 PK=0
+3: business_id (TEXT) NOTNULL=1 PK=0
+4: actor_id (TEXT) NOTNULL=1 PK=0
+5: actor_role (TEXT) NOTNULL=1 PK=0
+6: action (TEXT) NOTNULL=1 PK=0
+7: target_resource (TEXT) NOTNULL=1 PK=0
+8: outcome (TEXT) NOTNULL=1 PK=0
+9: correlation_id (TEXT) NOTNULL=1 PK=0
+10: details_json (TEXT) NOTNULL=1 PK=0

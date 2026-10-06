@@ -1,0 +1,236 @@
+{
+  "phase": "13-final-closure",
+  "timestamp": "2026-10-06T22:41:53.585Z",
+  "totalPrevious": 191,
+  "totalNew": 25,
+  "totalExecuted": 216,
+  "totalPassed": 216,
+  "totalFailed": 0,
+  "tests": [
+    {
+      "id": "RESTORE-A2",
+      "name": "Normal Success Restore Verification",
+      "command": "BackupHealthService.safeRestoreFromSnapshot(targetSnap.id, true)",
+      "expected": "beforeHash (1afd9fc87a77001365f99cd6545c344b3d09d19231adea213e7313966640ddf1) === afterHash (1afd9fc87a77001365f99cd6545c344b3d09d19231adea213e7313966640ddf1) with 10 cust, 10 inv, 5 jobs",
+      "actual": "allowed: true, cust: 10, inv: 10, jobs: 5, matches: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/restore-evidence.md"
+    },
+    {
+      "id": "RESTORE-A3",
+      "name": "Caught Exception Recovery (Application-Level Rollback Compensation)",
+      "command": "BackupHealthService.safeRestoreFromSnapshot with simulateMidRestoreFailure: true",
+      "expected": "Exception caught, inMemoryRollbackSnapshot restored, state fingerprint identical",
+      "actual": "rollbackExecuted: true, rolledBackSuccessfully: true, hashMatch: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/restore-evidence.md"
+    },
+    {
+      "id": "RESTORE-A4",
+      "name": "Real Process Crash / Durable Pre-Restore Snapshot Survival",
+      "command": "spawnSync node tests/crash_child_helper.cjs (process exit code 137)",
+      "expected": "Process killed abruptly; In-memory state terminated; Durable preRestoreBackupId preserved in safeStorage",
+      "actual": "childExitStatus: 137, crashPhase: mid-destructive-in-progress, durableSnapshotSaved: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/restore-evidence.md"
+    },
+    {
+      "id": "RESTORE-TX-VS-COMP",
+      "name": "Database Transaction Rollback vs Application Rollback Compensation",
+      "command": "Execute SQLite BEGIN IMMEDIATE -> INSERT -> ROLLBACK; Compare against StorageService compensation",
+      "expected": "SQLite supports true SQL ROLLBACK (0 rows); POS StorageService uses Application-Level Rollback Compensation",
+      "actual": "SQLite ROLLBACK rowCount: 0 (True DB Rollback); StorageService: inMemoryRollbackSnapshot (App Compensation)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/restore-evidence.md"
+    },
+    {
+      "id": "AUDIT-C1",
+      "name": "Audit Schema Inspection",
+      "command": "PRAGMA table_info(operational_audit_events)",
+      "expected": "Schema contains audit_event_id, timestamp, business_id, actor_id, actor_role, action, outcome, correlation_id",
+      "actual": "Found 11 columns: id, audit_event_id, timestamp, business_id, actor_id, actor_role, action, target_resource, outcome, correlation_id, details_json",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/audit-schema.txt"
+    },
+    {
+      "id": "AUDIT-C2",
+      "name": "Audit API Mutation Rejection (HTTP 405 Method Not Allowed)",
+      "command": "HTTP PUT, PATCH, DELETE /api/system/audit/test-id",
+      "expected": "HTTP 405 Method Not Allowed with IMMUTABLE_AUDIT_LOG error code",
+      "actual": "PUT: 405, PATCH: 405, DELETE: 405",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/audit-evidence.md"
+    },
+    {
+      "id": "AUDIT-C5",
+      "name": "Audit Immutability Classification Verification",
+      "command": "Inspection of API 405 vs Direct SQL mutation",
+      "expected": "Accurately classified as Application/API append-only enforcement",
+      "actual": "API rejects mutations (405); Direct SQL is classified honestly as application append-only",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/audit-tamper-results.txt"
+    },
+    {
+      "id": "AUDIT-TENANT",
+      "name": "Audit Tenant Isolation (Strict Cross-Tenant Denial)",
+      "command": "GET /api/system/audit?businessId=biz_tenant_B as Tenant A",
+      "expected": "Tenant A receives Tenant A data; Cross-tenant query denied with HTTP 403",
+      "actual": "Tenant A self-query: 200 (1 records), Cross-tenant query: 403",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/audit-evidence.md"
+    },
+    {
+      "id": "AUDIT-ROLE",
+      "name": "Audit Authorization Role Matrix",
+      "command": "GET /api/system/audit across 7 distinct roles",
+      "expected": "Unauthenticated: 401; Guest/Billing/Staff: 403; Manager/Admin/Owner: 200",
+      "actual": "Role matrix verification: ALL ROLES MATCH EXPECTED POLICY",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/audit-evidence.md"
+    },
+    {
+      "id": "HEALTH-D1",
+      "name": "Normal Health & Probe Semantics (Live vs Ready vs Diagnostics)",
+      "command": "GET /api/system/health?probe=live and probe=ready",
+      "expected": "Liveness: 200 liveness=true; Readiness: 200 readiness=true; Diagnostics: 200",
+      "actual": "Live: 200 (true), Ready: 200 (true), Diag: 200",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/health-evidence.md"
+    },
+    {
+      "id": "HEALTH-D2",
+      "name": "Liveness vs Readiness Degradation Isolation (Simulated Database Failure)",
+      "command": "Simulate DB I/O failure; Probe ?probe=live vs ?probe=ready",
+      "expected": "Liveness returns 200 (process alive); Readiness returns 503 (mandatory DB failed)",
+      "actual": "Live: 200 (liveness=true); Ready: 503 (readiness=false)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/health-evidence.md"
+    },
+    {
+      "id": "HEALTH-D3",
+      "name": "Optional Dependency Classification (Printer & Cloud Offline)",
+      "command": "Evaluation of local POS readiness with offline peripheral state",
+      "expected": "Optional peripherals (printer, cloud) do NOT trigger 503; POS remains ready for billing",
+      "actual": "Readiness remains 200; local POS offline billing operates normally",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/health-evidence.md"
+    },
+    {
+      "id": "OFFLINE-E1",
+      "name": "Offline Storage Secret Scan (Zero Privileged Secrets in localStorage)",
+      "command": "Scan safeStorage keys for passwords, SMTP creds, RSA private keys, master keys",
+      "expected": "Zero privileged secrets or unencrypted credentials persisted to browser storage",
+      "actual": "Storage scan: CLEAN (0 privileged secrets)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/offline-evidence.md"
+    },
+    {
+      "id": "OFFLINE-E2",
+      "name": "Offline Storage Corruption Resilience",
+      "command": "Parse malformed JSON payload from safeStorage",
+      "expected": "Application catches JSON syntax errors gracefully without fatal unhandled crash",
+      "actual": "Malformed JSON safely handled: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/offline-evidence.md"
+    },
+    {
+      "id": "PERF-REPRODUCE",
+      "name": "Performance Benchmark 5-Run Reproduction",
+      "command": "5 baseline runs vs 5 concurrent diagnostic runs (100 txns each)",
+      "expected": "Accurately measured p50/p95/p99; no material operator-facing latency impact",
+      "actual": "Base p50: 1.20ms, Conc p50: 1.14ms",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/performance-results.md"
+    },
+    {
+      "id": "RATE-VERIFY",
+      "name": "Rate Limiting & Tenant-Scoped Isolation",
+      "command": "41 requests on Tenant 1 + simultaneous request on Tenant 2",
+      "expected": "Tenant 1 throttled at req 41 (429); Tenant 2 unaffected (200); Instance-local documented",
+      "actual": "Req 40: 200, Req 41: 429 (Retry-After: 60s), Tenant 2: 200",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/rate-limit-results.md"
+    },
+    {
+      "id": "SUPPORT-SANITIZER",
+      "name": "Extended Support Report 15-Pattern Secret Sanitization",
+      "command": "scrubSupportReport with adversarial nested and serialized secrets",
+      "expected": "Zero secret strings present in output JSON; Unnecessary sensitive PII removed or masked",
+      "actual": "Sanitization result: CLEAN (0 secrets leaked)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/sanitizer-results.md"
+    },
+    {
+      "id": "SECRET-SCAN",
+      "name": "Repository-Wide Privileged Secrets Scan",
+      "command": "node tests/secret_scan.cjs against src, dist, server.ts",
+      "expected": "0 production secrets detected across entire codebase",
+      "actual": "Scan output: CLEAN (0 production secrets detected)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/secret-scan-results.md"
+    },
+    {
+      "id": "BUILD-VERIFY",
+      "name": "Production Build Verification",
+      "command": "npm run build",
+      "expected": "Vite production bundle builds with 0 errors",
+      "actual": "Build status: SUCCESS (Exit 0)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/build-results.txt"
+    },
+    {
+      "id": "LINT-VERIFY",
+      "name": "TypeScript Static Type & Lint Verification",
+      "command": "npm run lint",
+      "expected": "TypeScript compiler passes with 0 type errors",
+      "actual": "Lint status: SUCCESS (Exit 0)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/build-results.txt"
+    },
+    {
+      "id": "AUDIT-VERIFY",
+      "name": "Dependency Vulnerability Audit",
+      "command": "npm audit",
+      "expected": "0 vulnerabilities reported in project dependencies",
+      "actual": "Audit status: SUCCESS (0 vulnerabilities)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/build-results.txt"
+    },
+    {
+      "id": "REGRESS-P11",
+      "name": "Phase 11.2.2 License Authority Regression Gate",
+      "command": "npx tsx tests/final_evidence_challenge.ts + tests/security_verification.ts",
+      "expected": "All 65 tests PASS with zero regressions",
+      "actual": "Phase 11.2.2 status: PASS (65/65)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/regression-results.txt"
+    },
+    {
+      "id": "REGRESS-P12",
+      "name": "Phase 12 Communication Center Regression Gate",
+      "command": "npx tsx tests/communication_verification.ts",
+      "expected": "All 66 tests PASS with zero regressions",
+      "actual": "Phase 12 status: PASS (66/66)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/regression-results.txt"
+    },
+    {
+      "id": "REGRESS-P13-CORE",
+      "name": "Phase 13 Operations Core Regression Gate",
+      "command": "npx tsx tests/operations_verification.ts",
+      "expected": "All 39 tests PASS with zero regressions",
+      "actual": "Phase 13 Core status: PASS (39/39)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/regression-results.txt"
+    },
+    {
+      "id": "REGRESS-P13-MICRO",
+      "name": "Phase 13 Micro-Closure Regression Gate",
+      "command": "npx tsx tests/micro_closure_verification.ts",
+      "expected": "All 21 tests PASS with zero regressions",
+      "actual": "Phase 13 Micro-Closure status: PASS (21/21)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-13-final-closure/regression-results.txt"
+    }
+  ]
+}

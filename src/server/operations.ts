@@ -318,6 +318,9 @@ export function getDatabaseDiagnostics(): {
   };
 } {
   try {
+    if (process.env.__MOCK_DB_FAIL === 'true') {
+      throw new Error('Simulated Database I/O Failure');
+    }
     const db = getAuthorityDatabase();
     
     // Check integrity using read-only PRAGMA (bounded check)
@@ -529,6 +532,7 @@ export function scrubSupportReport(report: any): any {
       /authorization:\s*([^\r\n,]+)/gi,
       /-----BEGIN (RSA )?PRIVATE KEY-----[\s\S]*?-----END (RSA )?PRIVATE KEY-----/gi,
       /[A-Za-z]:\\[^"'\n\r\t<>|?*]+\.key/gi,
+      /[?&](?:pass|password|pwd|secret|key|token|auth|apikey|api_key)=[^&\s"']+/gi,
     ];
 
     for (const r of adversarialRegexes) {
