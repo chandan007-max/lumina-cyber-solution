@@ -1,6 +1,6 @@
 {
   "phase": "13-final-closure",
-  "timestamp": "2026-10-06T22:41:53.585Z",
+  "timestamp": "2026-10-07T00:54:22.140Z",
   "totalPrevious": 191,
   "totalNew": 25,
   "totalExecuted": 216,
@@ -11,7 +11,7 @@
       "id": "RESTORE-A2",
       "name": "Normal Success Restore Verification",
       "command": "BackupHealthService.safeRestoreFromSnapshot(targetSnap.id, true)",
-      "expected": "beforeHash (1afd9fc87a77001365f99cd6545c344b3d09d19231adea213e7313966640ddf1) === afterHash (1afd9fc87a77001365f99cd6545c344b3d09d19231adea213e7313966640ddf1) with 10 cust, 10 inv, 5 jobs",
+      "expected": "beforeHash (b3340230570be87a44ee4f36a5665f70522b85649f28bf98afd27a7a43052746) === afterHash (b3340230570be87a44ee4f36a5665f70522b85649f28bf98afd27a7a43052746) with 10 cust, 10 inv, 5 jobs",
       "actual": "allowed: true, cust: 10, inv: 10, jobs: 5, matches: true",
       "status": "PASS",
       "evidence": "artifacts/phase-13-final-closure/restore-evidence.md"
@@ -138,7 +138,7 @@
       "name": "Performance Benchmark 5-Run Reproduction",
       "command": "5 baseline runs vs 5 concurrent diagnostic runs (100 txns each)",
       "expected": "Accurately measured p50/p95/p99; no material operator-facing latency impact",
-      "actual": "Base p50: 1.20ms, Conc p50: 1.14ms",
+      "actual": "Base p50: 1.30ms, Conc p50: 1.22ms",
       "status": "PASS",
       "evidence": "artifacts/phase-13-final-closure/performance-results.md"
     },
@@ -147,7 +147,7 @@
       "name": "Rate Limiting & Tenant-Scoped Isolation",
       "command": "41 requests on Tenant 1 + simultaneous request on Tenant 2",
       "expected": "Tenant 1 throttled at req 41 (429); Tenant 2 unaffected (200); Instance-local documented",
-      "actual": "Req 40: 200, Req 41: 429 (Retry-After: 60s), Tenant 2: 200",
+      "actual": "Req 40: 200, Req 41: 429 (Retry-After: 59s), Tenant 2: 200",
       "status": "PASS",
       "evidence": "artifacts/phase-13-final-closure/rate-limit-results.md"
     },

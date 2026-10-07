@@ -7,6 +7,8 @@ import { createServer as createViteServer } from 'vite';
 import { getAuthorityDatabase } from './src/server/db';
 import { NativeSmtpClient } from './src/server/smtpClient';
 import { mountOperationsRoutes } from './src/server/operations';
+import { mountCommercialRoutes } from './src/server/commercialRoutes';
+import { loadServerConfig, validateStartupEnvironment } from './src/server/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1376,6 +1378,11 @@ export async function createApp() {
   // ==========================================
   mountOperationsRoutes(app);
 
+  // ==========================================
+  // PHASE 14: COMMERCIAL PRODUCTION READINESS API
+  // ==========================================
+  mountCommercialRoutes(app);
+
   // Generic Error Handler (P1: Generic Error Responses)
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error('Unhandled Server Error:', err);
@@ -1408,8 +1415,17 @@ export async function startAppServer() {
     app.use(vite.middlewares);
   }
 
+  const config = loadServerConfig();
+  const validation = validateStartupEnvironment(config);
+  for (const info of validation.info) console.log(`[STARTUP INFO] ${info}`);
+  for (const warn of validation.warnings) console.warn(`[STARTUP WARN] ${warn}`);
+  if (!validation.valid) {
+    for (const crit of validation.critical) console.error(`[STARTUP CRITICAL] ${crit}`);
+    throw new Error(`Fatal startup configuration failure: ${validation.critical.join('; ')}`);
+  }
+
   const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 LUMINA CYBER SOLUTION Authority Server running on http://0.0.0.0:${PORT}`);
+    console.log(`🚀 LUMINA CYBER SOLUTION Authority Server running on http://0.0.0.0:${PORT} [${config.env.toUpperCase()}]`);
   });
 
   return server;

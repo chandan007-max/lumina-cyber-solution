@@ -6,3 +6,5 @@ dist
 *.sqlite-journal
 test_*.sqlite*
 scratch/
+artifacts/
+tests/

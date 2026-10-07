@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
+import { runDatabaseMigrations, getMigrationStatus } from './migrationEngine';
+
+export { runDatabaseMigrations, getMigrationStatus };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,7 +19,7 @@ export function getAuthorityDatabase(dbPath?: string): any {
     const customDb = new DatabaseSync(dbPath);
     customDb.exec('PRAGMA foreign_keys = ON;');
     customDb.exec('PRAGMA journal_mode = WAL;');
-    initAuthorityTables(customDb);
+    initAuthorityTables(customDb, dbPath);
     return customDb;
   }
 
@@ -32,12 +35,14 @@ export function getAuthorityDatabase(dbPath?: string): any {
     dbInstance = new DatabaseSync(':memory:');
   }
 
-  initAuthorityTables(dbInstance);
+  initAuthorityTables(dbInstance, SERVER_DB_PATH);
   migrateLegacyJsonDb(dbInstance);
   return dbInstance;
 }
 
-function initAuthorityTables(db: any): void {
+function initAuthorityTables(db: any, targetPath?: string): void {
+  // Execute formal deterministic migration engine
+  runDatabaseMigrations(db, targetPath);
   db.exec(`
     CREATE TABLE IF NOT EXISTS commercial_customers (
       id TEXT PRIMARY KEY,

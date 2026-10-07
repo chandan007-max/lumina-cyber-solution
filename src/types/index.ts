@@ -401,3 +401,77 @@ export interface DebugLog {
   message: string;
   details?: Record<string, any>;
 }
+
+// ==========================================
+// CYBER CAFÉ SPECIFIC DOMAIN TYPES (PHASE 15)
+// ==========================================
+
+export type WorkstationStatus = 'IDLE' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'OFFLINE';
+
+export interface CyberWorkstation {
+  id: string;
+  businessId: string;
+  name: string;
+  ipAddress?: string;
+  status: WorkstationStatus;
+  hourlyRate: number;
+  minCharge: number;
+  currentSessionId?: string | null;
+  createdAt: string;
+}
+
+export interface ComputerSession {
+  id: string;
+  businessId: string;
+  workstationId: string;
+  workstationName: string;
+  customerId?: string;
+  customerName: string;
+  customerPhone?: string;
+  startedAt: string;
+  endedAt?: string | null;
+  durationMinutes: number;
+  hourlyRate: number;
+  minCharge: number;
+  calculatedCharge: number;
+  status: 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED';
+  notes?: string;
+  billedInvoiceId?: string | null;
+  operatorStaffId: string;
+}
+
+export type PrintClassification =
+  | 'PRINT COMMAND GENERATED'
+  | 'PRINT QUEUED'
+  | 'DRIVER ACCEPTED'
+  | 'PHYSICAL PRINT CONFIRMED'
+  | 'FAILED';
+
+export interface PrintJobRecord {
+  id: string;
+  businessId: string;
+  documentType: 'receipt' | 'document' | 'photo' | 'report';
+  documentTitle: string;
+  printerName: string;
+  printerType: 'thermal80' | 'thermal58' | 'a4_laser' | 'inkjet_photo';
+  copies: number;
+  pages: number;
+  status: PrintClassification;
+  createdAt: string;
+  dispatchedAt?: string;
+  operator: string;
+  notes?: string;
+}
+
+export interface OfflineSyncRecord {
+  id: string;
+  businessId: string;
+  entityType: 'invoice' | 'session' | 'customer' | 'job';
+  action: 'CREATE' | 'UPDATE' | 'DELETE';
+  payload: any;
+  queuedAt: string;
+  syncedAt?: string;
+  status: 'QUEUED' | 'SYNCED' | 'FAILED';
+  retryCount: number;
+  error?: string;
+}

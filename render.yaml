@@ -3,7 +3,7 @@ services:
     name: lumina-cyber-solution
     runtime: node
     plan: free
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: npm install --include=dev --legacy-peer-deps && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
@@ -13,4 +13,6 @@ services:
       - key: LUMINA_VAULT_MASTER_KEY
         generateValue: true
       - key: LUMINA_ADMIN_KEY
+        generateValue: true
+      - key: LUMINA_SESSION_SECRET
         generateValue: true

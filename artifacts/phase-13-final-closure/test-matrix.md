@@ -2,7 +2,7 @@
 
 | Test ID | Test Name | Expected | Actual | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| RESTORE-A2 | Normal Success Restore Verification | beforeHash (1afd9fc87a77001365f99cd6545c344b3d09d1... | allowed: true, cust: 10, inv: 10, jobs: 5, matches... | **PASS** |
+| RESTORE-A2 | Normal Success Restore Verification | beforeHash (b3340230570be87a44ee4f36a5665f70522b85... | allowed: true, cust: 10, inv: 10, jobs: 5, matches... | **PASS** |
 | RESTORE-A3 | Caught Exception Recovery (Application-Level Rollback Compensation) | Exception caught, inMemoryRollbackSnapshot restore... | rollbackExecuted: true, rolledBackSuccessfully: tr... | **PASS** |
 | RESTORE-A4 | Real Process Crash / Durable Pre-Restore Snapshot Survival | Process killed abruptly; In-memory state terminate... | childExitStatus: 137, crashPhase: mid-destructive-... | **PASS** |
 | RESTORE-TX-VS-COMP | Database Transaction Rollback vs Application Rollback Compensation | SQLite supports true SQL ROLLBACK (0 rows); POS St... | SQLite ROLLBACK rowCount: 0 (True DB Rollback); St... | **PASS** |
@@ -16,8 +16,8 @@
 | HEALTH-D3 | Optional Dependency Classification (Printer & Cloud Offline) | Optional peripherals (printer, cloud) do NOT trigg... | Readiness remains 200; local POS offline billing o... | **PASS** |
 | OFFLINE-E1 | Offline Storage Secret Scan (Zero Privileged Secrets in localStorage) | Zero privileged secrets or unencrypted credentials... | Storage scan: CLEAN (0 privileged secrets)... | **PASS** |
 | OFFLINE-E2 | Offline Storage Corruption Resilience | Application catches JSON syntax errors gracefully ... | Malformed JSON safely handled: true... | **PASS** |
-| PERF-REPRODUCE | Performance Benchmark 5-Run Reproduction | Accurately measured p50/p95/p99; no material opera... | Base p50: 1.20ms, Conc p50: 1.14ms... | **PASS** |
-| RATE-VERIFY | Rate Limiting & Tenant-Scoped Isolation | Tenant 1 throttled at req 41 (429); Tenant 2 unaff... | Req 40: 200, Req 41: 429 (Retry-After: 60s), Tenan... | **PASS** |
+| PERF-REPRODUCE | Performance Benchmark 5-Run Reproduction | Accurately measured p50/p95/p99; no material opera... | Base p50: 1.30ms, Conc p50: 1.22ms... | **PASS** |
+| RATE-VERIFY | Rate Limiting & Tenant-Scoped Isolation | Tenant 1 throttled at req 41 (429); Tenant 2 unaff... | Req 40: 200, Req 41: 429 (Retry-After: 59s), Tenan... | **PASS** |
 | SUPPORT-SANITIZER | Extended Support Report 15-Pattern Secret Sanitization | Zero secret strings present in output JSON; Unnece... | Sanitization result: CLEAN (0 secrets leaked)... | **PASS** |
 | SECRET-SCAN | Repository-Wide Privileged Secrets Scan | 0 production secrets detected across entire codeba... | Scan output: CLEAN (0 production secrets detected)... | **PASS** |
 | BUILD-VERIFY | Production Build Verification | Vite production bundle builds with 0 errors... | Build status: SUCCESS (Exit 0)... | **PASS** |

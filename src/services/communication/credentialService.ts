@@ -264,7 +264,7 @@ export class CredentialService {
       .replace(/secret=[^\s&"';,]+/gi, 'secret=[REDACTED]')
       .replace(/key=[^\s&"';,]+/gi, 'key=[REDACTED]')
       .replace(/Bearer\s+[a-zA-Z0-9_\-\.]+/gi, 'Bearer [REDACTED]')
-      .replace(/(?:https?|postgres|mysql|smtp):\/\/[^:\s'"]+:([^@\s'"]+)@/gi, '$1://[REDACTED_USER]:[REDACTED_PASSWORD]@')
+      .replace(/(https?|postgres|mysql|smtp):\/\/[^:\s'"]+:([^@\s'"]+)@/gi, '$1://[REDACTED_USER]:[REDACTED_PASSWORD]@')
       .replace(/(?:api_?key|access_?token|refresh_?token|client_?secret|secret_?key|master_?key|smtp_?password|password|secret)%3D[^&"'\s]+/gi, 'secret%3D[REDACTED]')
       .replace(/(?:%2F%2F[^%]+%3A)([^%&]+)%40/gi, '%2F%2F[REDACTED]%3A[REDACTED]%40')
       .replace(/at\s+.*?(?:password|secret|token|key|credential|auth).*?\n?/gi, '    at [REDACTED_STACK_TRACE_LINE]\n');

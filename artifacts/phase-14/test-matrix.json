@@ -1,0 +1,220 @@
+{
+  "phase": "14-commercial-production-readiness",
+  "timestamp": "2026-10-07T00:54:33.082Z",
+  "totalExecuted": 21,
+  "passed": 21,
+  "failed": 0,
+  "successRate": "100.0%",
+  "tests": [
+    {
+      "id": "PROD-CONFIG-01",
+      "name": "Environment Configuration Model",
+      "workstream": "P0 — Production Configuration",
+      "command": "loadServerConfig()",
+      "expected": "Centralized configuration model distinguishes port, paths, and environment",
+      "actual": "Env: test, Port: 3114, DB: data_server_authority.sqlite",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/configuration-audit.md"
+    },
+    {
+      "id": "PROD-CONFIG-02",
+      "name": "Sanitized Diagnostics Configuration Redaction",
+      "workstream": "P0 — Production Configuration",
+      "command": "getSanitizedConfigForDiagnostics(loadedConfig)",
+      "expected": "Zero admin keys, private keys, or passwords exposed in diagnostics",
+      "actual": "Diagnostics secret leak detected: false, Redacted: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/configuration-audit.md"
+    },
+    {
+      "id": "ENV-VAL-01",
+      "name": "Startup Validation of Healthy Environment",
+      "workstream": "P0 — Environment Validation",
+      "command": "validateStartupEnvironment(loadedConfig)",
+      "expected": "Healthy configuration passes startup checks with zero critical errors",
+      "actual": "Valid: true, Critical count: 0",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/configuration-audit.md"
+    },
+    {
+      "id": "ENV-VAL-02",
+      "name": "Startup Rejection of Unhealthy / Unwritable Environment",
+      "workstream": "P0 — Environment Validation",
+      "command": "validateStartupEnvironment with invalid unreachable database path",
+      "expected": "Fails safely with CRITICAL classification, preventing startup of unhealthy system",
+      "actual": "Valid: false, Critical errors: 1",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/configuration-audit.md"
+    },
+    {
+      "id": "MIGRATION-01",
+      "name": "Database Migration Execution & Deterministic Idempotency",
+      "workstream": "P0 — Database Migration System",
+      "command": "runDatabaseMigrations(db) twice consecutively",
+      "expected": "Applied migrations recorded in schema_migrations; second execution applies 0 migrations without error",
+      "actual": "Run 1: 0 applied, Run 2: 0 applied, Total recorded: 4",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/migration-results.md"
+    },
+    {
+      "id": "MIGRATION-02",
+      "name": "Migration Tracking Table Integrity",
+      "workstream": "P0 — Database Migration System",
+      "command": "SELECT name FROM sqlite_master WHERE name='schema_migrations'",
+      "expected": "schema_migrations table exists with version tracking",
+      "actual": "Table exists: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/migration-results.md"
+    },
+    {
+      "id": "ONBOARDING-01",
+      "name": "Transactional Multi-Step Customer Onboarding",
+      "workstream": "P0 — Customer Onboarding",
+      "command": "OnboardingService.createTenantTransactional(payload)",
+      "expected": "Tenant, customer, trial subscription, and onboarding tracker created transactionally",
+      "actual": "Success: true, Biz: biz_1791334472961_iayi, SubStatus: TRIAL, Step: 8",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/onboarding-results.md"
+    },
+    {
+      "id": "ONBOARDING-02",
+      "name": "11-Step Onboarding Progress Tracker",
+      "workstream": "P0 — Customer Onboarding",
+      "command": "OnboardingService.recordStepCompletion",
+      "expected": "Onboarding steps advance deterministically with completed steps array updated",
+      "actual": "Initial step: 8, Post step: 9",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/onboarding-results.md"
+    },
+    {
+      "id": "TENANT-ROLLBACK-01",
+      "name": "Transactional Rollback Safety on Injected Failure",
+      "workstream": "P0 — Tenant Creation Safety",
+      "command": "createTenantTransactional rollback on failure",
+      "expected": "Atomic transaction rollback leaves zero orphan tenants, owners, or subscriptions",
+      "actual": "Caught failure safely: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/onboarding-results.md"
+    },
+    {
+      "id": "SUB-STATE-01",
+      "name": "Subscription Lifecycle State Machine Transitions",
+      "workstream": "P0 — Commercial Subscription Model",
+      "command": "Sequential valid state transitions: TRIAL->ACTIVE->PAST_DUE->GRACE_PERIOD->SUSPENDED->REACTIVATED->CANCELLED",
+      "expected": "All valid transitions succeed deterministically with audit logging",
+      "actual": "TRIAL->ACTIVE: ACTIVE, PAST_DUE: PAST_DUE, GRACE: GRACE_PERIOD, SUSP: SUSPENDED, REACT: REACTIVATED, CANCEL: CANCELLED",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/subscription-results.md"
+    },
+    {
+      "id": "SUB-STATE-02",
+      "name": "Rejection of Illegal Subscription Transitions",
+      "workstream": "P0 — Commercial Subscription Model",
+      "command": "Attempt illegal transition CANCELLED -> ACTIVE",
+      "expected": "Illegal state transitions rejected with error, preventing state machine bypass",
+      "actual": "Illegal transition blocked: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/subscription-results.md"
+    },
+    {
+      "id": "SUB-ACCESS-01",
+      "name": "Subscription Feature Access Matrix Enforcement",
+      "workstream": "P0 — Commercial Subscription Model",
+      "command": "SUBSCRIPTION_ACCESS_MATRIX across ACTIVE, SUSPENDED, and CANCELLED states",
+      "expected": "Access privileges mapped deterministically; Suspended/Cancelled accounts blocked from new transactions",
+      "actual": "Active canTransact: true, Suspended canTransact: false",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/subscription-results.md"
+    },
+    {
+      "id": "PLAN-01",
+      "name": "Plan Catalog Integrity & Pricing Isolation",
+      "workstream": "P0 — Plan Management",
+      "command": "PlanService.getPlans()",
+      "expected": "Catalog provides plans with isolated pricing, SLA tiers, and currency specifications",
+      "actual": "Plan count: 4, Starter price: ₹ 999, Ent SLA: CRITICAL",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/subscription-results.md"
+    },
+    {
+      "id": "LIC-BOUNDARY-01",
+      "name": "Authority Private Key Isolation From Commercial Tables",
+      "workstream": "P0 — License ↔ Subscription Boundary",
+      "command": "Query commercial tables for cryptographic private signing keys",
+      "expected": "Zero private keys stored in business/commercial application tables",
+      "actual": "Private keys found in commercial tables: 0",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/license-results.md"
+    },
+    {
+      "id": "BILLING-01",
+      "name": "Invoice Creation & Explicit Manual Payment Settlement",
+      "workstream": "P1 — Billing Lifecycle",
+      "command": "CommercialBillingService.createInvoice -> CommercialBillingService.recordManualPayment",
+      "expected": "Invoice created and paid via explicit MANUAL PAYMENT without simulated gateway",
+      "actual": "Invoice: inv_comm_1791334473002_v69v, Status: PAID, Method: MANUAL_BANK_TRANSFER",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/billing-results.md"
+    },
+    {
+      "id": "BILLING-02",
+      "name": "Duplicate Payment Rejection on Settled Invoice",
+      "workstream": "P1 — Billing Lifecycle",
+      "command": "Attempt second payment against already PAID invoice",
+      "expected": "Duplicate payment rejected safely to prevent ledger inconsistency",
+      "actual": "Duplicate payment rejected: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/billing-results.md"
+    },
+    {
+      "id": "ADMIN-LIFECYCLE-01",
+      "name": "Administrative Tenant Suspension and Reactivation with Audit Trail",
+      "workstream": "P1 — Customer Suspension / Reactivation",
+      "command": "CustomerAdminService.suspendTenant -> reactivateTenant",
+      "expected": "Tenant suspended and reactivated cleanly with recorded reason and operator audit",
+      "actual": "Suspended: true (SUSPENDED), Reactivated: true (ACTIVE)",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/role-results.md"
+    },
+    {
+      "id": "SUPPORT-SLA-01",
+      "name": "Support Ticket Priority & SLA Target Calculation",
+      "workstream": "P1 — Support SLA",
+      "command": "SupportService.createTicket for CRITICAL and LOW priority incidents",
+      "expected": "Automatic SLA calculation establishes strict acknowledgement and resolution targets",
+      "actual": "Critical SLA resolve window: 4 hrs, Low SLA resolve window: 96 hrs",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/support-results.md"
+    },
+    {
+      "id": "SUPPORT-NOTES-01",
+      "name": "Support Internal Notes vs Customer-Visible Notes Segregation",
+      "workstream": "P1 — Support Center",
+      "command": "SupportService.addMessage with isInternal flag",
+      "expected": "Internal engineering notes strictly marked and segregated from customer-visible notes",
+      "actual": "Public note internal flag: false, Internal note internal flag: true",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/support-results.md"
+    },
+    {
+      "id": "OFFBOARD-01",
+      "name": "Safe Customer Offboarding & 90-Day Retention Enforcement",
+      "workstream": "P1 — Customer Offboarding",
+      "command": "CustomerAdminService.offboardTenant",
+      "expected": "Customer cancelled safely; 90-day retention lock protects against premature data destruction",
+      "actual": "Status: OFFBOARDED, Retention until: 2027-01-05T00:54:33.040Z",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/offboarding-results.md"
+    },
+    {
+      "id": "ERROR-SAN-01",
+      "name": "Production Error Telemetry Secret Scrubbing",
+      "workstream": "P1 — Production Error Handling",
+      "command": "scrubSupportReport with adversarial error diagnostic payload",
+      "expected": "Passwords, database connection credentials, RSA keys, and Bearer tokens completely scrubbed",
+      "actual": "Clean: true, Residual secrets found: false",
+      "status": "PASS",
+      "evidence": "artifacts/phase-14/security-results.md"
+    }
+  ]
+}

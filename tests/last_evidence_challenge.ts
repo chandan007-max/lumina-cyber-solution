@@ -76,6 +76,7 @@ async function makeRequest(
     const reqHeaders: Record<string, string> = {
       ...headers,
       'Content-Type': 'application/json',
+      'Connection': 'close',
     };
     if (payload) {
       reqHeaders['Content-Length'] = Buffer.byteLength(payload).toString();
@@ -88,6 +89,7 @@ async function makeRequest(
         path: urlPath,
         method,
         headers: reqHeaders,
+        agent: false,
       },
       (res) => {
         let raw = '';
@@ -964,8 +966,7 @@ async function runChallenge() {
     `# SANITIZER FORENSIC RESULTS\n\nTested 15 adversarial secret injection patterns.\nResult: 100% CLEAN.\nLeak detected: None.\n`
   );
 
-  // Close test server
-  testServer.close();
+
 
   // ------------------------------------------------------------------
   // 9. REPOSITORY-WIDE SECRET SCAN & BUILD / LINT VERIFICATION
@@ -1052,16 +1053,20 @@ async function runChallenge() {
   // ------------------------------------------------------------------
   console.log('\n--- SECTION 10: RE-EXECUTING FULL REGRESSION BASELINE ---');
 
-  const p11_fc = spawnSync('npx.cmd', ['tsx', 'tests/final_evidence_challenge.ts'], { shell: true, encoding: 'utf8' });
-  const p11_sec = spawnSync('npx.cmd', ['tsx', 'tests/security_verification.ts'], { shell: true, encoding: 'utf8' });
-  const p12_comm = spawnSync('npx.cmd', ['tsx', 'tests/communication_verification.ts'], { shell: true, encoding: 'utf8' });
-  const p13_ops = spawnSync('npx.cmd', ['tsx', 'tests/operations_verification.ts'], { shell: true, encoding: 'utf8' });
-  const p13_micro = spawnSync('npx.cmd', ['tsx', 'tests/micro_closure_verification.ts'], { shell: true, encoding: 'utf8' });
+  testServer.close();
+  const authorityUrl = process.env.LUMINA_AUTHORITY_URL || 'http://127.0.0.1:3000';
+  const childEnv = { ...process.env, LUMINA_AUTHORITY_URL: authorityUrl };
+  const p11_fc = spawnSync('npx.cmd', ['tsx', 'tests/final_evidence_challenge.ts'], { shell: true, encoding: 'utf8', env: childEnv });
+  const p11_sec = spawnSync('npx.cmd', ['tsx', 'tests/security_verification.ts'], { shell: true, encoding: 'utf8', env: childEnv });
+  const p12_comm = spawnSync('npx.cmd', ['tsx', 'tests/communication_verification.ts'], { shell: true, encoding: 'utf8', env: childEnv });
+  const p13_ops = spawnSync('npx.cmd', ['tsx', 'tests/operations_verification.ts'], { shell: true, encoding: 'utf8', env: childEnv });
+  const p13_micro = spawnSync('npx.cmd', ['tsx', 'tests/micro_closure_verification.ts'], { shell: true, encoding: 'utf8', env: childEnv });
 
   const p11_pass = p11_fc.status === 0 && p11_sec.status === 0;
   const p12_pass = p12_comm.status === 0;
   const p13_ops_pass = p13_ops.status === 0;
   const p13_micro_pass = p13_micro.status === 0;
+
 
   console.log(`Phase 11.2.2 Core & Challenge (65/65):   ${p11_pass ? 'PASS (65/65)' : 'FAIL'}`);
   console.log(`Phase 12 Communication Center (66/66):   ${p12_pass ? 'PASS (66/66)' : 'FAIL'}`);

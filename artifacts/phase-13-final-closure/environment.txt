@@ -2,8 +2,8 @@ Node Version:      v24.19.0
 OS Platform:       Windows_NT 10.0.26200 (x64)
 CPUs:              Intel(R) Core(TM) i5-10310U CPU @ 1.70GHz (8 cores)
 Total RAM:         7.69 GB
-Package Version:   0.0.0
+Package Version:   1.0.0
 Database File:     ./src/server/data_server_authority.sqlite
-Database Size:     3403776 bytes
+Database Size:     5341184 bytes
 Instance Mode:     Single-Instance (Workstation Local POS)
 SQLite Mode:       WAL (Write-Ahead Logging)
